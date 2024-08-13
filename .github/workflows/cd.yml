@@ -1,0 +1,88 @@
+name: T-Shirt Launcher Deployment
+on: [workflow_dispatch]
+
+jobs:
+  build-test-deploy:
+    runs-on: self-hosted # Assumes label matches your runner
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux Only)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y powershell ninja-build
+
+      - name: Verify Python version
+        shell: pwsh
+        run: |
+          $versionString = python --version
+          Write-Output "Found Python version: $versionString"
+          $version = [System.Version]($versionString -replace '^Python\s', '')
+          if ($version -lt [System.Version]"3.9") {
+            throw "Expected Python 3.9 or higher, but found $versionString"
+          }
+      - name: Install Poetry
+        run: pip install poetry==1.7.0
+
+      - name: Install dependencies
+        run: poetry install
+        working-directory: ${{ github.workspace }}
+
+      - name: Run tests
+        run: poetry run pytest
+        working-directory: ${{ github.workspace }}
+
+      - name: Update Systemd Service
+        if: runner.os == 'Linux' && success()
+        run: |
+          echo "[Unit]
+          Description=My Python Application
+          After=network.target
+
+          [Service]
+          Type=simple
+          # Omitted the User line so it defaults to running as root
+          WorkingDirectory=${{ github.workspace }}
+          ExecStart=/root/.local/bin/poetry run python ${{ github.workspace }}/src/pygptcourse/main.py
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target" | sudo tee /etc/systemd/system/pygptcourse.service
+
+          sudo systemctl daemon-reload
+          sudo systemctl restart pygptcourse.service
+
+      - name: Setup Windows Service (Windows Only)
+        if: runner.os == 'Windows' && success()
+        run: |
+          $ServiceName = "PyGPTCourseService"
+          $WorkingDir = "${{ github.workspace }}"
+          $AppPath = "src\pygptcourse\main.py"
+          $PoetryPath = "poetry.exe"
+          $ServiceCommand = "powershell.exe -Command `"cd $WorkingDir; & $PoetryPath run python $AppPath`""
+
+          # Check if the service exists and delete it if so
+          $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+          if ($service) {
+            Write-Output "Service $ServiceName exists. Deleting..."
+            sc.exe delete $ServiceName
+            # Optional: Wait for the service to be fully deleted
+            while (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
+              Start-Sleep -Seconds 2
+            }
+          }
+
+          # Create the service using sc.exe and start it within a try...catch block
+          try {
+            sc.exe create $ServiceName binPath= $ServiceCommand start= auto
+            Start-Job -ScriptBlock { sc.exe start "PyGPTCourseService" } | Out-Null
+          } catch {
+            Write-Error "Failed to start the service: $_"
+            Write-Error "Starting a PowerShell script on Windows is extraordinally hard."
+            Write-Output "You can start the service manually going to Services->$ServiceName->Properties and copy the"
+            Write-Output "script it tries to launch. Paste it into Administrator PowerShell and the script should work."
+          }
+        shell: pwsh
