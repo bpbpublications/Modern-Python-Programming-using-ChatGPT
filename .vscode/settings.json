@@ -1,0 +1,14 @@
+{
+    "githubPullRequests.ignoredPullRequestBranches": [
+        "main"
+    ],
+    "cSpell.words": [
+        "adil",
+        "creds",
+        "dotenv",
+        "millis",
+        "opentelemetry",
+        "otel",
+        "OTLP"
+    ]
+}
