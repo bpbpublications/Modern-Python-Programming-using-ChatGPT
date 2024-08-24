@@ -1,6 +1,6 @@
-# pygptcourse
+# Modern Python Programming using ChatGPT
 
-[![test](https://github.com/gshiva/pygptcourse/actions/workflows/ci.yml/badge.svg)](https://github.com/gshiva/pygptcourse/actions/workflows/ci.yml)
+[![test](https://github.com/bpbpublications/Modern-Python-Programming-using-ChatGPT/actions/workflows/ci.yml/badge.svg)](https://github.com/bpbpublications/Modern-Python-Programming-using-ChatGPT/actions/workflows/ci.yml)
 
 Face detection, tracking using OpenCV, USB micro T-Shirt launcher and RaspberryPi camera module to demonstrate how ChatGPT can speed up development and writing clean and SOLID code.
 
@@ -27,7 +27,7 @@ The ability to develop, test and debug the launcher and facial recognition funct
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/gshiva/pygptcourse.git
+   git clone https://github.com/bpbpublications/Modern-Python-Programming-using-ChatGPT.git
    ```
 
 1. Install the required dependencies:
@@ -179,7 +179,7 @@ python main.py --headless --simulate
 You could build a Docker container using the information in .devcontainer.json. To run the built image:
 
 ```bash
-docker run -it --device /dev/video0:/dev/video0 -v /home/user/code/pygptcourse:/tmp/pygptcourse bash
+docker run -it --device /dev/video0:/dev/video0 -v /home/user/code/Modern-Python-Programming-using-ChatGPT/:/tmp/Modern-Python-Programming-using-ChatGPT/ bash
 ```
 
 **Note:**
